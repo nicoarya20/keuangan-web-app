@@ -1,0 +1,3 @@
+MIND
+/src/generated/prisma
+\n.env\nprisma/*.db\nprisma/*.db-journal
