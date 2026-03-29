@@ -1,3 +1,7 @@
+node_modules
+dist
+.env
+prisma/*.db
+prisma/*.db-journal
 MIND
 /src/generated/prisma
-\n.env\nprisma/*.db\nprisma/*.db-journal
