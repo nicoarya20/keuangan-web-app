@@ -4,7 +4,7 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Plus, TrendingDown, Trash2, AlertCircle, Settings } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
@@ -14,11 +14,12 @@ import { Progress } from '../components/ui/progress';
 const EXPENSE_CATEGORIES = [
   'Food & Dining',
   'Transportation',
-  'Entertainment',
   'Shopping',
+  'Entertainment',
   'Bills & Utilities',
-  'Healthcare',
+  'Health & Wellness',
   'Education',
+  'Gift & Donation',
   'Other',
 ];
 
@@ -26,26 +27,24 @@ export const ExpensesPage: React.FC = () => {
   const { expenses, addExpense, deleteExpense, categoryBudgets, setCategoryBudget } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [isBudgetOpen, setIsBudgetOpen] = useState(false);
-  const [budgetCategory, setBudgetCategory] = useState('Food & Dining');
-  const [budgetAmount, setBudgetAmount] = useState('');
-  
   const [formData, setFormData] = useState({
     amount: '',
-    category: 'Food & Dining',
-    date: format(new Date(), 'yyyy-MM-dd'),
+    category: EXPENSE_CATEGORIES[0],
+    date: new Date().toISOString().split('T')[0],
     note: '',
     tags: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      toast.error('Please enter a valid amount');
-      return;
-    }
+  const [budgetData, setBudgetData] = useState({
+    category: EXPENSE_CATEGORIES[0],
+    amount: '',
+  });
 
-    addExpense({
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.amount || !formData.category || !formData.date) return;
+
+    await addExpense({
       amount: parseFloat(formData.amount),
       category: formData.category,
       date: formData.date,
@@ -55,109 +54,69 @@ export const ExpensesPage: React.FC = () => {
 
     setFormData({
       amount: '',
-      category: 'Food & Dining',
-      date: format(new Date(), 'yyyy-MM-dd'),
+      category: EXPENSE_CATEGORIES[0],
+      date: new Date().toISOString().split('T')[0],
       note: '',
       tags: '',
     });
     setIsOpen(false);
-    toast.success('Expense added successfully!');
   };
 
-  const handleDelete = (id: string) => {
-    deleteExpense(id);
-    toast.success('Expense deleted');
-  };
+  const handleBudgetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!budgetData.amount) return;
 
-  const handleSetBudget = () => {
-    if (!budgetAmount || parseFloat(budgetAmount) <= 0) {
-      toast.error('Please enter a valid budget amount');
-      return;
-    }
-    setCategoryBudget(budgetCategory, parseFloat(budgetAmount));
-    setBudgetAmount('');
+    await setCategoryBudget(budgetData.category, parseFloat(budgetData.amount));
+    setBudgetData({ category: EXPENSE_CATEGORIES[0], amount: '' });
     setIsBudgetOpen(false);
-    toast.success(`Budget set for ${budgetCategory}`);
   };
 
-  // Monthly calculations
-  const currentMonth = new Date();
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this expense?')) {
+      await deleteExpense(id);
+    }
+  };
 
-  const monthlyExpenses = expenses.filter((expense) => {
-    const expenseDate = parseISO(expense.date);
-    return expenseDate >= monthStart && expenseDate <= monthEnd;
+  // Calculate stats
+  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const monthlyExpenses = expenses.filter(exp => {
+    const date = parseISO(exp.date);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  }).reduce((sum, exp) => sum + exp.amount, 0);
+
+  // Budget tracking
+  const budgetStats = Object.entries(categoryBudgets).map(([category, limit]) => {
+    const spent = expenses
+      .filter(exp => {
+        const date = parseISO(exp.date);
+        return exp.category === category && date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      })
+      .reduce((sum, exp) => sum + exp.amount, 0);
+    return { category, limit, spent, percentage: Math.min((spent / limit) * 100, 100) };
   });
 
-  const totalExpense = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-
-  // Category breakdown
-  const categoryBreakdown = monthlyExpenses.reduce((acc, expense) => {
-    acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-    return acc;
-  }, {} as Record<string, number>);
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 lg:space-y-8 max-w-5xl mx-auto pb-20 lg:pb-0">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Expense Tracking</h1>
-          <p className="text-sm lg:text-base text-gray-500 mt-1">Monitor your spending</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Expenses</h1>
+          <p className="text-sm lg:text-base text-gray-500 mt-1">Manage your spending and budgets</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Dialog open={isBudgetOpen} onOpenChange={setIsBudgetOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="rounded-xl w-full sm:w-auto">
-                <Settings className="w-4 h-4 mr-2" />
-                Set Budget
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-2xl sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Set Category Budget</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="budget-category">Category</Label>
-                  <Select value={budgetCategory} onValueChange={setBudgetCategory}>
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EXPENSE_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="budget-amount">Monthly Budget (Rp)</Label>
-                  <Input
-                    id="budget-amount"
-                    type="number"
-                    placeholder="1000000"
-                    value={budgetAmount}
-                    onChange={(e) => setBudgetAmount(e.target.value)}
-                    className="rounded-xl"
-                  />
-                </div>
-                <Button
-                  onClick={handleSetBudget}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl"
-                >
-                  Set Budget
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsBudgetOpen(true)}
+            className="rounded-xl flex-1 sm:flex-none"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Set Budgets
+          </Button>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-red-600 hover:bg-red-700 rounded-xl w-full sm:w-auto">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-xl flex-1 sm:flex-none">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Expense
               </Button>
@@ -165,6 +124,9 @@ export const ExpensesPage: React.FC = () => {
             <DialogContent className="rounded-2xl sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Add New Expense</DialogTitle>
+                <DialogDescription>
+                  Add a new spending record to track your expenses.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -212,28 +174,28 @@ export const ExpensesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="note">Note (Optional)</Label>
-                  <Input
-                    id="note"
-                    placeholder="What did you buy?"
-                    value={formData.note}
-                    onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                    className="rounded-xl"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="tags">Tags (Optional, comma-separated)</Label>
+                  <Label htmlFor="tags">Tags (Comma separated)</Label>
                   <Input
                     id="tags"
-                    placeholder="lunch, work"
+                    placeholder="food, lunch, office"
                     value={formData.tags}
                     onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                     className="rounded-xl"
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 rounded-xl">
+                <div>
+                  <Label htmlFor="note">Note (Optional)</Label>
+                  <Input
+                    id="note"
+                    placeholder="What was this for?"
+                    value={formData.note}
+                    onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                    className="rounded-xl"
+                  />
+                </div>
+
+                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl">
                   Add Expense
                 </Button>
               </form>
@@ -242,72 +204,119 @@ export const ExpensesPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Budget Modal */}
+      <Dialog open={isBudgetOpen} onOpenChange={setIsBudgetOpen}>
+        <DialogContent className="rounded-2xl sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Category Budgets</DialogTitle>
+            <DialogDescription>
+              Set a monthly spending limit for each category.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleBudgetSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="budget-category">Category</Label>
+              <Select
+                value={budgetData.category}
+                onValueChange={(value) => setBudgetData({ ...budgetData, category: value })}
+              >
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EXPENSE_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="budget-amount">Monthly Limit (Rp)</Label>
+              <Input
+                id="budget-amount"
+                type="number"
+                placeholder="2000000"
+                value={budgetData.amount}
+                onChange={(e) => setBudgetData({ ...budgetData, amount: e.target.value })}
+                className="rounded-xl"
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl">
+              Save Budget
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Stats */}
-      <Card className="p-4 lg:p-5 bg-white rounded-2xl shadow-sm">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs lg:text-sm text-gray-600">Total Expenses (This Month)</p>
-            <p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1">
-              Rp {totalExpense.toLocaleString('id-ID')}
-            </p>
-            <p className="text-[10px] lg:text-xs text-gray-500 mt-2">{monthlyExpenses.length} transactions</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className="p-4 lg:p-5 bg-white rounded-2xl shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs lg:text-sm text-gray-600">Total Monthly Spending</p>
+              <p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1">
+                Rp {monthlyExpenses.toLocaleString('id-ID')}
+              </p>
+              <p className="text-[10px] lg:text-xs text-gray-500 mt-2">Current month</p>
+            </div>
+            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-red-50 rounded-xl flex items-center justify-center">
+              <TrendingDown className="w-4 h-4 lg:w-5 lg:h-5 text-red-600" />
+            </div>
           </div>
-          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-red-50 rounded-xl flex items-center justify-center">
-            <TrendingDown className="w-4 h-4 lg:w-5 lg:h-5 text-red-600" />
-          </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Category Budgets */}
-      {Object.keys(categoryBudgets).length > 0 && (
+        <Card className="p-4 lg:p-5 bg-white rounded-2xl shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs lg:text-sm text-gray-600">Active Budgets</p>
+              <p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1">
+                {Object.keys(categoryBudgets).length} Categories
+              </p>
+              <p className="text-[10px] lg:text-xs text-gray-500 mt-2">Monitoring limits</p>
+            </div>
+            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+              <AlertCircle className="w-4 h-4 lg:w-5 lg:h-5 text-indigo-600" />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Budgets Progress */}
+      {budgetStats.length > 0 && (
         <Card className="p-4 lg:p-6 bg-white rounded-2xl shadow-sm">
-          <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">Budget Overview</h3>
-          <div className="space-y-4">
-            {Object.entries(categoryBudgets).map(([category, budget]) => {
-              const spent = categoryBreakdown[category] || 0;
-              const percentage = (spent / budget) * 100;
-              const isOverBudget = percentage > 100;
-              const isWarning = percentage > 80 && percentage <= 100;
-
-              return (
-                <div key={category}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs lg:text-sm font-medium text-gray-700 truncate mr-2">{category}</span>
-                    <span className="text-[10px] lg:text-sm text-gray-500 whitespace-nowrap">
-                      Rp {spent.toLocaleString('id-ID')} / Rp {budget.toLocaleString('id-ID')}
-                    </span>
-                  </div>
-                  <Progress
-                    value={Math.min(percentage, 100)}
-                    className={`h-1.5 lg:h-2 ${
-                      isOverBudget
-                        ? '[&>div]:bg-red-500'
-                        : isWarning
-                        ? '[&>div]:bg-amber-500'
-                        : '[&>div]:bg-green-500'
-                    }`}
-                  />
-                  {isOverBudget && (
-                    <div className="flex items-center gap-1 mt-1 text-[10px] lg:text-xs text-red-600">
-                      <AlertCircle className="w-3 h-3" />
-                      <span>Over budget by Rp {(spent - budget).toLocaleString('id-ID')}</span>
-                    </div>
-                  )}
+          <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">Budget Progress</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {budgetStats.map((stat) => (
+              <div key={stat.category} className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-gray-700">{stat.category}</span>
+                  <span className="text-gray-500">
+                    Rp {stat.spent.toLocaleString('id-ID')} / {stat.limit.toLocaleString('id-ID')}
+                  </span>
                 </div>
-              );
-            })}
+                <Progress 
+                  value={stat.percentage} 
+                  className="h-2"
+                  // indicatorClassName={stat.percentage > 90 ? 'bg-red-500' : stat.percentage > 70 ? 'bg-amber-500' : 'bg-green-500'}
+                />
+                <p className="text-[10px] lg:text-xs text-right text-gray-400">
+                  {stat.percentage.toFixed(1)}% used
+                </p>
+              </div>
+            ))}
           </div>
         </Card>
       )}
 
       {/* Expense List */}
       <Card className="p-4 lg:p-6 bg-white rounded-2xl shadow-sm">
-        <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">All Expenses</h3>
+        <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">Recent Expenses</h3>
         <div className="space-y-3">
           {expenses.length === 0 ? (
-            <p className="text-center text-gray-400 py-8 text-sm">
-              No expense records yet. Track your first expense!
-            </p>
+            <p className="text-center text-gray-400 py-8 text-sm">No expenses yet. Start tracking your spending!</p>
           ) : (
             expenses.map((expense) => (
               <div
@@ -319,24 +328,19 @@ export const ExpensesPage: React.FC = () => {
                     <TrendingDown className="w-5 h-5 lg:w-6 lg:h-6 text-red-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm lg:text-base truncate">{expense.category}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-gray-900 text-sm lg:text-base truncate">{expense.category}</p>
+                      {expense.tags?.map((tag) => (
+                        <span key={tag} className="px-2 py-0.5 bg-gray-200 text-gray-600 text-[10px] lg:text-xs rounded-full">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
                     <p className="text-xs lg:text-sm text-gray-500">
                       {format(parseISO(expense.date), 'MMM dd, yyyy')}
                     </p>
                     {expense.note && (
                       <p className="text-xs lg:text-sm text-gray-600 mt-1 line-clamp-1">{expense.note}</p>
-                    )}
-                    {expense.tags && expense.tags.length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {expense.tags.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 bg-gray-200 text-gray-700 text-[10px] lg:text-xs rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
                     )}
                   </div>
                 </div>
@@ -360,4 +364,4 @@ export const ExpensesPage: React.FC = () => {
       </Card>
     </div>
   );
-};
+}

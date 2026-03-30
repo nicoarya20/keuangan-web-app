@@ -4,7 +4,7 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Switch } from '../components/ui/switch';
 import { Plus, TrendingUp, Trash2, CalendarIcon } from 'lucide-react';
@@ -24,7 +24,7 @@ export const IncomePage: React.FC = () => {
     note: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
@@ -32,7 +32,7 @@ export const IncomePage: React.FC = () => {
       return;
     }
 
-    addIncome({
+    await addIncome({
       amount: parseFloat(formData.amount),
       category: formData.category,
       date: formData.date,
@@ -48,12 +48,12 @@ export const IncomePage: React.FC = () => {
       note: '',
     });
     setIsOpen(false);
-    toast.success('Income added successfully!');
   };
 
-  const handleDelete = (id: string) => {
-    deleteIncome(id);
-    toast.success('Income deleted');
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this income?')) {
+      await deleteIncome(id);
+    }
   };
 
   const totalIncome = incomes.reduce((sum, income) => sum + income.amount, 0);
@@ -79,6 +79,9 @@ export const IncomePage: React.FC = () => {
           <DialogContent className="rounded-2xl sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add New Income</DialogTitle>
+              <DialogDescription>
+                Fill in the details below to add a new income source.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
