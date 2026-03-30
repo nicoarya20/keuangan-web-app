@@ -1,0 +1,15 @@
+61 | Example:
+62 |   await prisma.$executeRawUnsafe(\`ALTER USER prisma WITH PASSWORD '\${password}'\`)
+63 | 
+64 | More Information: https://pris.ly/d/execute-raw
+65 | `)}var ci=({clientMethod:e,activeProvider:t})=>r=>{let n="",i;if(mr(r))n=r.sql,i={values:tt(r.values),__prismaRawParameters__:!0};else if(Array.isArray(r)){let[o,...s]=r;n=o,i={values:tt(s||[]),__prismaRawParameters__:!0}}else switch(t){case"sqlite":case"mysql":{n=r.sql,i={values:tt(r.values),__prismaRawParameters__:!0};break}case"cockroachdb":case"postgresql":case"postgres":{n=r.text,i={values:tt(r.values),__prismaRawParameters__:!0};break}case"sqlserver":{n=gl(r),i={values:tt(r.values),__prismaRawParameters__:!0};break}default:throw new Error(`The ${t} provider does not support ${e}`)}return i?.values?El(`prisma.${e}(${n}, ${i.values})`):El(`prisma.${e}(${n})`),{query:n,parameters:i}},Tl={requestArgsToMiddlewareArgs(e){return[e.strings,...e.values]},middlewareArgsToRequestArgs(e){let[t,...r]=e;return new Pl.Sql(t,r)}},Sl={requestArgsToMiddlewareArgs(e){return[e]},middlewareArgsToRequestArgs(e){return e[0]}};function pi(e){return function(r,n){let i,o=(s=e)=>{try{return s===void 0||s?.kind==="itx"?i??=vl(r(s
+66 | Read more at https://pris.ly/d/client-constructor`),this.name="PrismaClientConstructorValidationError"}get[Symbol.toStringTag](){return"PrismaClientConstructorValidationError"}};gt(R,"PrismaClientConstructorValidationError");var _l=["errorFormat","adapter","accelerateUrl","log","transactionOptions","omit","comments","__internal"],$l=["pretty","colorless","minimal"],Ll=["info","query","warn","error"],Cm={adapter:()=>{},accelerateUrl:e=>{if(e!==void 0){if(typeof e!="string")throw new R(`Invalid value ${JSON.stringify(e)} for "accelerateUrl" provided to PrismaClient constructor.`);if(e.trim().length===0)throw new R('"accelerateUrl" provided to PrismaClient constructor must be a non-empty string.')}},errorFormat:e=>{if(e){if(typeof e!="string")throw new R(`Invalid value ${JSON.stringify(e)} for "errorFormat" provided to PrismaClient constructor.`);if(!$l.includes(e)){let t=Ut(e,$l);throw new R(`Invalid errorFormat ${e} provided to PrismaClient constructor.${t}`)}}},log:e=>{if(!e)return;if(!Array.isArray(e))throw 
+
+PrismaClientConstructorValidationError: Unknown property datasources provided to PrismaClient constructor.
+Read more at https://pris.ly/d/client-constructor
+      at jl (/Users/lukman/Downloads/Web-App-Keuangan/node_modules/@prisma/client/runtime/client.js:66:3832)
+      at new t (/Users/lukman/Downloads/Web-App-Keuangan/node_modules/@prisma/client/runtime/client.js:70:1808)
+      at /Users/lukman/Downloads/Web-App-Keuangan/src/lib/prisma.ts:8:3
+      at loadAndEvaluateModule (2:1)
+
+Bun v1.3.11 (macOS arm64)

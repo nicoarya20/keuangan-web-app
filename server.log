@@ -1,0 +1,24 @@
+🦊 Elysia is running at 0.0.0.0:4000
+Error [P2021]: 116 | 
+117 | Example:
+118 |   await prisma.$executeRawUnsafe(\`ALTER USER prisma WITH PASSWORD '\${password}'\`)
+119 | 
+120 | More Information: https://pris.ly/d/execute-raw
+121 | `)}var co=({clientMethod:e,activeProvider:t})=>r=>{let n="",i;if(pa(r))n=r.sql,i={values:jt(r.values),__prismaRawParameters__:!0};else if(Array.isArray(r)){let[o,...s]=r;n=o,i={values:jt(s||[]),__prismaRawParameters__:!0}}else switch(t){case"sqlite":case"mysql":{n=r.sql,i={values:jt(r.values),__prismaRawParameters__:!0};break}case"cockroachdb":case"postgresql":case"postgres":{n=r.text,i={values:jt(r.values),__prismaRawParameters__:!0};break}case"sqlserver":{n=bl(r),i={values:jt(r.values),__prismaRawParameters__:!0};break}default:throw new Error(`The ${t} provider does not support ${e}`)}return i?.values?Tl(`prisma.${e}(${n}, ${i.values})`):Tl(`prisma.${e}(${n})`),{query:n,parameters:i}},Rl={requestArgsToMiddlewareArgs(e){return[e.strings,...e.values]},middlewareArgsToRequestArgs(e){let[t,...r]=e;return new oe(t,r)}},Cl={requestArgsToMiddlewareArgs(e){return[e]},middlewareArgsToRequestArgs(e){return e[0]}};function po(e){return function(r){let n,i=(o=e)=>{try{return o===void 0||o?.kind==="itx"?n??=Sl(r(o)):Sl(
+
+PrismaClientKnownRequestError: 
+Invalid `prisma.income.findMany()` invocation:
+
+
+The table `public.Income` does not exist in the current database.
+ clientVersion: "5.22.0",
+       meta: {
+  modelName: "Income",
+  table: "public.Income",
+},
+       code: "P2021"
+
+      at handleRequestError (/Users/lukman/Downloads/Web-App-Keuangan/node_modules/@prisma/client/runtime/library.js:121:7315)
+      at handleAndLogRequestError (/Users/lukman/Downloads/Web-App-Keuangan/node_modules/@prisma/client/runtime/library.js:121:6623)
+      at request (/Users/lukman/Downloads/Web-App-Keuangan/node_modules/@prisma/client/runtime/library.js:121:6307)
+
