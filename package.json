@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "prisma generate && vite build",
     "dev": "concurrently \"vite\" \"bun run server\"",
     "server": "bun run src/server.ts",
     "notify": "bun run .gemini/hooks/telegram-notify.ts"
