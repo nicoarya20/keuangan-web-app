@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const SavingsPage: React.FC = () => {
-  const { savings, addSaving, deleteSaving } = useFinance();
+  const { savings, addSaving, deleteSaving, isLoading } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
@@ -20,6 +20,14 @@ export const SavingsPage: React.FC = () => {
     date: format(new Date(), 'yyyy-MM-dd'),
     type: 'saving' as 'saving' | 'investment',
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

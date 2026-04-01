@@ -23,7 +23,7 @@ const EXPENSE_CATEGORIES = [
 ];
 
 export const ExpensesPage: React.FC = () => {
-  const { expenses, addExpense, deleteExpense, categoryBudgets, setCategoryBudget } = useFinance();
+  const { expenses, addExpense, deleteExpense, categoryBudgets, setCategoryBudget, isLoading } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [isBudgetOpen, setIsBudgetOpen] = useState(false);
   const [budgetCategory, setBudgetCategory] = useState('Food & Dining');
@@ -36,6 +36,14 @@ export const ExpensesPage: React.FC = () => {
     note: '',
     tags: '',
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
