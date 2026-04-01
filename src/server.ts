@@ -4,9 +4,15 @@ import { swagger } from '@elysiajs/swagger'
 import { prisma } from './lib/prisma'
 import { auth } from './lib/auth'
 
-const app = new Elysia()
+const app = new Elysia({
+    // Trust proxy for Vercel
+    precompile: true,
+})
     .use(cors({
-        origin: 'http://localhost:5173',
+        origin: [
+            'http://localhost:5173',
+            'https://keuangan-web-app.vercel.app'
+        ],
         credentials: true,
         allowedHeaders: ['Content-Type', 'Authorization']
     }))
@@ -23,12 +29,17 @@ const app = new Elysia()
         }
     })
     .onError(({ code, error, set }) => {
-        console.error('API Error:', error)
+        console.error(`API Error [${code}]:`, error)
+        if (error instanceof Error) {
+            console.error('Stack:', error.stack)
+        }
         const message = error instanceof Error ? error.message : String(error)
         return {
             status: 'error',
             code,
-            message
+            message,
+            // Include more details in development or for specific codes
+            details: process.env.NODE_ENV !== 'production' ? error : undefined
         }
     })
     .group('/api', (app) =>
