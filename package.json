@@ -78,6 +78,7 @@
     "concurrently": "^9.2.1",
     "prisma": "^6.19.2",
     "tailwindcss": "4.1.12",
+    "typescript": "^6.0.2",
     "vite": "6.3.5"
   },
   "peerDependencies": {
