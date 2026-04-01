@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { Progress } from '../components/ui/progress';
 
 export const WishlistPage: React.FC = () => {
-  const { wishlist, addWishlistItem, deleteWishlistItem, updateWishlistItem } = useFinance();
+  const { wishlist, addWishlistItem, deleteWishlistItem, updateWishlistItem, isLoading } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -21,6 +21,14 @@ export const WishlistPage: React.FC = () => {
     priority: 'medium' as 'low' | 'medium' | 'high',
     note: '',
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

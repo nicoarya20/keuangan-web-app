@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 const INCOME_CATEGORIES = ['Salary', 'Freelance', 'Side Hustle', 'Bonus', 'Investment', 'Other'];
 
 export const IncomePage: React.FC = () => {
-  const { incomes, addIncome, deleteIncome } = useFinance();
+  const { incomes, addIncome, deleteIncome, isLoading } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
@@ -23,6 +23,14 @@ export const IncomePage: React.FC = () => {
     recurring: false,
     note: '',
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
