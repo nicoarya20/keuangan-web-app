@@ -24,10 +24,11 @@ const app = new Elysia()
     })
     .onError(({ code, error, set }) => {
         console.error('API Error:', error)
+        const message = error instanceof Error ? error.message : String(error)
         return {
             status: 'error',
             code,
-            message: error.message
+            message
         }
     })
     .group('/api', (app) =>
