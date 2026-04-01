@@ -6,9 +6,6 @@ import { prisma } from './lib/prisma'
 const app = new Elysia()
     .use(cors())
     .use(swagger())
-    .error({
-        PRISMA_ERROR: (error) => error
-    })
     .onError(({ code, error, set }) => {
         console.error('API Error:', error)
         return {
