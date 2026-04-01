@@ -59,7 +59,7 @@ interface FinanceContextType {
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? (typeof window !== 'undefined' ? window.location.origin + '/api' : '/api') : 'http://localhost:3001/api');
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { data: session, isPending: isSessionLoading } = authClient.useSession();
