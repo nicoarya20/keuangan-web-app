@@ -35,6 +35,7 @@ export const Dashboard: React.FC = () => {
   const totalIncome = monthlyIncomes.reduce((sum, income) => sum + income.amount, 0);
   const totalExpense = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const totalSavings = savings.reduce((sum, saving) => sum + saving.amount, 0);
+  const totalIncomeWithSavings = totalIncome + totalSavings;
   const balance = totalIncome - totalExpense;
   const savingRate = totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(1) : '0';
 
@@ -113,7 +114,7 @@ export const Dashboard: React.FC = () => {
               <div>
                 <p className="text-xs lg:text-sm text-gray-600">Total Income</p>
                 <p className="text-xl lg:text-2xl font-bold text-gray-900 mt-1">
-                  Rp {totalIncome.toLocaleString('id-ID')}
+                  Rp {totalIncomeWithSavings.toLocaleString('id-ID')}
                 </p>
                 <div className="flex items-center gap-1 mt-2">
                   <ArrowUpRight className="w-3 h-3 text-green-600" />
