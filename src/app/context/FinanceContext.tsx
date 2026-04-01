@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authClient } from '@/lib/auth-client';
 
 export interface Income {
   id: string;
@@ -52,6 +53,8 @@ interface FinanceContextType {
   deleteSaving: (id: string) => Promise<void>;
   categoryBudgets: Record<string, number>;
   setCategoryBudget: (category: string, budget: number) => Promise<void>;
+  user: any;
+  isSessionLoading: boolean;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -59,22 +62,24 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { data: session, isPending: isSessionLoading } = authClient.useSession();
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [savings, setSavings] = useState<Saving[]>([]);
   const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchAllData = async () => {
+    if (!session) return;
     setIsLoading(true);
     try {
       const [incomesRes, expensesRes, wishlistRes, savingsRes, budgetsRes] = await Promise.all([
-        fetch(`${API_URL}/incomes`),
-        fetch(`${API_URL}/expenses`),
-        fetch(`${API_URL}/wishlist`),
-        fetch(`${API_URL}/savings`),
-        fetch(`${API_URL}/budgets`),
+        fetch(`${API_URL}/incomes`, { credentials: 'include' }),
+        fetch(`${API_URL}/expenses`, { credentials: 'include' }),
+        fetch(`${API_URL}/wishlist`, { credentials: 'include' }),
+        fetch(`${API_URL}/savings`, { credentials: 'include' }),
+        fetch(`${API_URL}/budgets`, { credentials: 'include' }),
       ]);
 
       const [incomesData, expensesData, wishlistData, savingsData, budgetsData] = await Promise.all([
@@ -85,18 +90,20 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         budgetsRes.json(),
       ]);
 
-      setIncomes(incomesData);
-      setExpenses(expensesData.map((e: any) => ({
+      setIncomes(Array.isArray(incomesData) ? incomesData : []);
+      setExpenses(Array.isArray(expensesData) ? expensesData.map((e: any) => ({
         ...e,
         tags: e.tags ? e.tags.split(',') : []
-      })));
-      setWishlist(wishlistData);
-      setSavings(savingsData);
+      })) : []);
+      setWishlist(Array.isArray(wishlistData) ? wishlistData : []);
+      setSavings(Array.isArray(savingsData) ? savingsData : []);
       
       const budgetsRecord: Record<string, number> = {};
-      budgetsData.forEach((b: any) => {
-        budgetsRecord[b.category] = b.amount;
-      });
+      if (Array.isArray(budgetsData)) {
+          budgetsData.forEach((b: any) => {
+            budgetsRecord[b.category] = b.amount;
+          });
+      }
       setCategoryBudgets(budgetsRecord);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -106,15 +113,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   useEffect(() => {
-    fetchAllData();
-  }, []);
+    if (session) {
+      fetchAllData();
+    } else {
+      setIncomes([]);
+      setExpenses([]);
+      setWishlist([]);
+      setSavings([]);
+      setCategoryBudgets({});
+    }
+  }, [session]);
 
   const addIncome = async (income: Omit<Income, 'id'>) => {
+    if (!session) return;
     try {
       const res = await fetch(`${API_URL}/incomes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(income),
+        credentials: 'include',
       });
       const newIncome = await res.json();
       setIncomes((prev) => [newIncome, ...prev]);
@@ -124,11 +141,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const addExpense = async (expense: Omit<Expense, 'id'>) => {
+    if (!session) return;
     try {
       const res = await fetch(`${API_URL}/expenses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(expense),
+        credentials: 'include',
       });
       const newExpense = await res.json();
       setExpenses((prev) => [{
@@ -141,11 +160,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const addWishlistItem = async (item: Omit<WishlistItem, 'id'>) => {
+    if (!session) return;
     try {
       const res = await fetch(`${API_URL}/wishlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item),
+        credentials: 'include',
       });
       const newItem = await res.json();
       setWishlist((prev) => [newItem, ...prev]);
@@ -155,11 +176,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const addSaving = async (saving: Omit<Saving, 'id'>) => {
+    if (!session) return;
     try {
       const res = await fetch(`${API_URL}/savings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(saving),
+        credentials: 'include',
       });
       const newSaving = await res.json();
       setSavings((prev) => [newSaving, ...prev]);
@@ -169,11 +192,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateWishlistItem = async (id: string, updates: Partial<WishlistItem>) => {
+    if (!session) return;
     try {
       const res = await fetch(`${API_URL}/wishlist/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
+        credentials: 'include',
       });
       const updatedItem = await res.json();
       setWishlist((prev) =>
@@ -185,8 +210,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteIncome = async (id: string) => {
+    if (!session) return;
     try {
-      await fetch(`${API_URL}/incomes/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/incomes/${id}`, { method: 'DELETE', credentials: 'include' });
       setIncomes((prev) => prev.filter((item) => item.id !== id));
     } catch (error) {
       console.error('Failed to delete income:', error);
@@ -194,8 +220,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteExpense = async (id: string) => {
+    if (!session) return;
     try {
-      await fetch(`${API_URL}/expenses/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/expenses/${id}`, { method: 'DELETE', credentials: 'include' });
       setExpenses((prev) => prev.filter((item) => item.id !== id));
     } catch (error) {
       console.error('Failed to delete expense:', error);
@@ -203,8 +230,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteWishlistItem = async (id: string) => {
+    if (!session) return;
     try {
-      await fetch(`${API_URL}/wishlist/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/wishlist/${id}`, { method: 'DELETE', credentials: 'include' });
       setWishlist((prev) => prev.filter((item) => item.id !== id));
     } catch (error) {
       console.error('Failed to delete wishlist item:', error);
@@ -212,8 +240,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteSaving = async (id: string) => {
+    if (!session) return;
     try {
-      await fetch(`${API_URL}/savings/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/savings/${id}`, { method: 'DELETE', credentials: 'include' });
       setSavings((prev) => prev.filter((item) => item.id !== id));
     } catch (error) {
       console.error('Failed to delete saving:', error);
@@ -221,11 +250,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const setCategoryBudget = async (category: string, budget: number) => {
+    if (!session) return;
     try {
       await fetch(`${API_URL}/budgets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category, amount: budget }),
+        credentials: 'include',
       });
       setCategoryBudgets((prev) => ({ ...prev, [category]: budget }));
     } catch (error) {
@@ -252,6 +283,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         deleteSaving,
         categoryBudgets,
         setCategoryBudget,
+        user: session?.user,
+        isSessionLoading,
       }}
     >
       {children}

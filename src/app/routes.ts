@@ -5,8 +5,13 @@ import { IncomePage } from './pages/IncomePage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { SavingsPage } from './pages/SavingsPage';
+import LoginPage from './pages/LoginPage';
 
 export const router = createBrowserRouter([
+  {
+    path: '/login',
+    Component: LoginPage,
+  },
   {
     path: '/',
     Component: RootLayout,

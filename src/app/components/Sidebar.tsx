@@ -8,8 +8,12 @@ import {
   PiggyBank,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '../components/ui/utils';
+import { useFinance } from '../context/FinanceContext';
+import { authClient } from '@/lib/auth-client';
+import { Button } from './ui/button';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -18,6 +22,12 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
   const location = useLocation();
+  const { user } = useFinance();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    window.location.href = '/login';
+  };
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -91,16 +101,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose }) => {
           </nav>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <span className="text-indigo-600 font-semibold">U</span>
+          <div className="px-4 py-4 border-t border-gray-200 space-y-3">
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center overflow-hidden">
+                {user?.image ? (
+                  <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-indigo-600 font-semibold">
+                    {user?.name?.charAt(0) || 'U'}
+                  </span>
+                )}
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">User</p>
-                <p className="text-xs text-gray-500">user@email.com</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'User'}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.email || 'user@email.com'}</p>
               </div>
             </div>
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl h-11"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Log out</span>
+            </Button>
           </div>
         </div>
       </aside>
